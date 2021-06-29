@@ -11,4 +11,8 @@ public interface ICartService {
 
 	Response changeQuantity(long cartNumber , int quantity);
 
+	Response viewAllBooksInCart(String token);
+
+	Response viewAllBooksInCartForCustomer(String token);
+
 }

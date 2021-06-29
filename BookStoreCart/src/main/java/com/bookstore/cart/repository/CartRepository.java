@@ -1,5 +1,6 @@
 package com.bookstore.cart.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,5 +12,7 @@ public interface CartRepository extends JpaRepository<CartModel , Long>{
 
 	@Query(value = "SELECT * FROM cart as c WHERE c.customer = ?1 AND c.book = ?2" , nativeQuery = true)
 	Optional<CartModel> findByBookAndCustomer(long customer, long book);
+
+	List<CartModel> findByCustomer(long customerId);
 
 }

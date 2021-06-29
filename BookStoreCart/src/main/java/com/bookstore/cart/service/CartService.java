@@ -13,6 +13,7 @@ import com.bookstore.cart.exception.CartException;
 import com.bookstore.cart.model.CartModel;
 import com.bookstore.cart.repository.CartRepository;
 import com.bookstore.cart.response.Response;
+import com.bookstore.cart.utility.TokenUtility;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,12 +29,16 @@ public class CartService implements ICartService {
 	
 	@Autowired
 	private ModelMapper mapper;
+	
+	@Autowired
+	private TokenUtility tokenManager;
 
+	//Adding book to the Cart
 	@Override
 	public Response addBookToCart(CartDTO cartDTO) {
 		log.info("Book Creation Accessed");
 		
-		boolean doesCustomerExist = restTemplate.getForObject("http://localhost:6001/customer/checkCustomer/"+cartDTO.getCustomer() , boolean.class);
+		boolean doesCustomerExist = restTemplate.getForObject("http:/customerService/customer/checkCustomer/"+cartDTO.getCustomer() , boolean.class);
 		Optional<CartModel> doesCustomerHaveTheBook = cartRepository.findByBookAndCustomer(cartDTO.getCustomer(), cartDTO.getBook());
 		
 		if (doesCustomerExist == true) {
@@ -61,6 +66,7 @@ public class CartService implements ICartService {
 		
 	}
 
+	//Removing book from cart
 	@Override
 	public Response removeBookFromCart(long cartNumber) {
 		log.info("Accessed Book removal from cart");
@@ -78,6 +84,7 @@ public class CartService implements ICartService {
 		}
 	}
 
+	//Changing quantity of the book inside the cart
 	@Override
 	public Response changeQuantity(long cartNumber , int quantity) {
 		
@@ -95,6 +102,46 @@ public class CartService implements ICartService {
 		}else {
 			log.error("Book was not found for removing from the cart "+cartNumber);
 			throw new CartException(501 , "Book not found with given details");
+		}
+	}
+
+	//Method which serves the end point to view all books
+	@Override
+	public Response viewAllBooksInCart(String token) {
+		log.info("Accessed view all books");
+		
+		long customerId = tokenManager.decodeToken(token);
+		
+		boolean doesCustomerExist = restTemplate.getForObject("http:/customerService/customer/checkCustomer/"+customerId , boolean.class);
+		
+		if (doesCustomerExist == true) {
+			//Customer is verified and can access the whole cart
+			log.info("Customer has been verified and now can access the cart");
+			return new Response("Fetched whole cart " , cartRepository.findAll() );
+			
+			}else {
+			log.error("Customer could not verified");
+			throw new CartException(601,"Customer could not be verified ");
+		}
+	}
+
+	//Method which serves the end point to books by cart
+	@Override
+	public Response viewAllBooksInCartForCustomer(String token) {
+		log.info("Accessed view all books for Customer");
+		
+		long customerId = tokenManager.decodeToken(token);
+		
+		boolean doesCustomerExist = restTemplate.getForObject("http:/customerService/customer/checkCustomer/"+customerId , boolean.class);
+		
+		if (doesCustomerExist == true) {
+			//Customer is verified and can access the cart
+			log.info("Customer has been verified and now can access his cart");
+			return new Response("Fetched books inside your cart " , cartRepository.findByCustomer(customerId) );
+			
+		}else {
+			log.error("Customer could not verified");
+			throw new CartException(601,"Customer could not be verified ");
 		}
 	}
 
